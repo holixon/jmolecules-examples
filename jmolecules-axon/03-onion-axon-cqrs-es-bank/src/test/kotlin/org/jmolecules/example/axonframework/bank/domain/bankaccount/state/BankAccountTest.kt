@@ -1,6 +1,11 @@
 package org.jmolecules.example.axonframework.bank.domain.bankaccount.state
 
+import net.jqwik.api.ForAll
+import net.jqwik.api.Property
+import net.jqwik.api.constraints.IntRange
+import net.jqwik.api.constraints.Negative
 import org.assertj.core.api.Assertions.assertThat
+import org.assertj.core.api.Assertions.assertThatThrownBy
 import org.jmolecules.example.axonframework.bank.domain.bankaccount.command.BankAccount
 import org.jmolecules.example.axonframework.bank.domain.bankaccount.event.BankAccountCreatedEvent
 import org.jmolecules.example.axonframework.bank.domain.bankaccount.type.*
@@ -9,6 +14,7 @@ import org.jmolecules.example.axonframework.bank.domain.moneytransfer.type.Money
 import org.jmolecules.example.axonframework.bank.domain.moneytransfer.type.RejectionReason
 import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.assertThrows
+import kotlin.math.max
 
 internal class BankAccountTest {
 
@@ -18,6 +24,20 @@ internal class BankAccountTest {
   private val validInitialBalance = Balance.of(17)
   private val tooHighInitialBalance = Balance.of(1234)
   private val moneyTransferId = MoneyTransferId.of("0815")
+
+  @Property
+  fun `minimum balance is required to create an account`(
+    @ForAll @Negative negative : Int
+  ) {
+    println(negative)
+     assertThatThrownBy {
+      BankAccount.createAccount(
+        accountId = accountId,
+        initialBalance = Balance.of(negative)
+      )
+    }.isInstanceOf(InsufficientBalance::class.java)
+
+  }
 
   @Test
   fun `create bank account with valid balance`() {
